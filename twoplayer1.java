@@ -18,50 +18,104 @@ import javax.swing.Timer;
 import java.util.*;
 
 public class twoplayer1 extends JPanel implements ActionListener, KeyListener, Runnable{
-
+    public int looptimer=0;
+    public int waittimer=-1;
     private DatagramSocket socket;
     private boolean running;
     private InetSocketAddress address;
+    private InetSocketAddress address2;
+    public int destinationport1;
+    public int destinationport2;
+    public int sourceport;
     private boolean startgameforeign=false;
     public boolean startgamelocal=false;
     private boolean upPressed = false;
     private boolean downPressed = false;
     private boolean wPressed = false;
     private boolean sPressed = false;
-
-    private int ballX = 250;
-    private int ballY = 250;
+    private boolean leftPressed = false;
+    private boolean rightPressed = false;
+    public String location="";
+    private int ballX = 240;
+    private int ballY = 240;
     private int diameter = 20;
-    private int ballDeltaX = -3;
-    private int ballDeltaY = 3;
+    private int ballDeltaX = -5;
+    private int ballDeltaY = -5;
     private int initialballDeltaX = ballDeltaX;
     private int initialballDeltaY = ballDeltaY;
 
-    private int playerOneX = 25;                                //this represents the left coordinate of the bat
-    private int playerOneY = 250;                               // this represents the topmost coordinated of bat
-    private int playerOneWidth = 10;
-    private int playerOneHeight = 50;
+    private int localplayerX = 25;                              //this represents the left coordinate of the bat
+    private int localplayerY = 250;                               // this represents the topmost coordinated of bat
+    private int localplayerWidth = 10;
+    private int localplayerHeight = 50;
 
-    private int playerTwoX = 465;
-    private int playerTwoY = 250;
-    private int playerTwoWidth = 10;
-    private int playerTwoHeight = 50;
+    private int lvX = 0;                               //this represents the left coordinate of the bat
+    private int lvY = 0;                               // this represents the topmost coordinated of bat
+    private int lvWidth = 10;
+    private int lvHeight = 50;
 
-    private int paddleSpeed = 5;        //represents speed of the bat
+    private int dhX = 0;                               //this represents the left coordinate of the bat
+    private int dhY = 0;                               // this represents the topmost coordinated of bat
+    private int dhWidth = 50;
+    private int dhHeight = 10;
 
-    private int playerOneScore = 0;
-    private int playerTwoScore = 0;
+    private int rvX = 0;                               //this represents the left coordinate of the bat
+    private int rvY = 0;                               // this represents the topmost coordinated of bat
+    private int rvWidth = 10;
+    private int rvHeight = 50;
 
-    int counter1=0;
-    int counter2=0;
+    private int uhX = 0;                               //this represents the left coordinate of the bat
+    private int uhY = 0;                               // this represents the topmost coordinated of bat
+    private int uhWidth = 50;
+    private int uhHeight = 10;
+
+    private int paddleSpeed = 8;        //represents speed of the bat
+
+    private int playerlvScore = 0;
+    private int playerdhScore = 0;
+    private int playerrvScore = 0;
+    private int playeruhScore = 0;
+
+    private boolean islv=false;
+    private boolean isdh=false;
+    private boolean isrv=false;
+    private boolean isuh=false;
+
+    public String positionmsg="";
+
     int deviation=0;
     
 
 
     //construct a PongPanel
-    public twoplayer1(){
+    public twoplayer1(String a){
+        location=a;
         setBackground(Color.BLACK);
-
+        if(location.equals("lv")){
+            localplayerX = 15;                               //this represents the left coordinate of the bat
+            localplayerY = 250;                               // this represents the topmost coordinated of bat
+            localplayerWidth = 10;
+            localplayerHeight = 50;
+        }
+        else if(location.equals("dh")){
+            localplayerX = 250;                               //this represents the left coordinate of the bat
+            localplayerY = 475;                               // this represents the topmost coordinated of bat
+            localplayerWidth = 50;
+            localplayerHeight = 10;
+        }
+        else if(location.equals("rv")){
+            localplayerX = 475;                               //this represents the left coordinate of the bat
+            localplayerY = 250;                               // this represents the topmost coordinated of bat
+            localplayerWidth = 10;
+            localplayerHeight = 50;
+        }
+        else if(location.equals("uh")){
+            localplayerX = 250;                               //this represents the left coordinate of the bat
+            localplayerY = 15;                               // this represents the topmost coordinated of bat
+            localplayerWidth = 50;
+            localplayerHeight = 10;
+        }
+        //System.out.println(localplayerX+""+localplayerY+""+localplayerWidth+""+localplayerHeight);
         //listen to key presses
         setFocusable(true);
         addKeyListener(this);
@@ -73,6 +127,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
 
     public void bind(int port) throws SocketException
     {
+        sourceport=port;
         socket = new DatagramSocket(port);
     }
     
@@ -88,9 +143,10 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         socket.close();
     }
 
-    public void getaddress(InetSocketAddress addresspassed)
+    public void getaddress(InetSocketAddress addresspassed, InetSocketAddress addresspassed2)
     {
         address=addresspassed;
+        address2=addresspassed2;   
     }
 
     
@@ -113,7 +169,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         }
     }
 
-    public boolean countdashes(String s)
+    public int countdashes(String s)
     {
         int c=0;
         for(int i=0;i<s.length();i++)
@@ -123,20 +179,12 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 c++;
             }
         }
-        return c==3;
+        return c;
     }
-
-    public boolean countdashesp(String s)
+    public void getdestinationports(int a, int b)
     {
-        int c=0;
-        for(int i=0;i<s.length();i++)
-        {
-            if(s.charAt(i)=='_')
-            {
-                c++;
-            }
-        }
-        return c==1;
+        destinationport1=a;
+        destinationport2=b;
     }
     @Override
     public void run()
@@ -152,37 +200,123 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 socket.receive(packet);
                 
                 String msg = new String(buffer, 0, packet.getLength());
-                //System.out.println(msg);// iski jagah positions yahan banani hain
-                if(countdashesp(msg))
+                System.out.println(msg);// iski jagah positions yahan banani hain
+                if(countdashes(msg)==2)
                 {
-                String coordinates[]=msg.split("_");
-                String sxcoordinates=coordinates[0];
-                String sycoordinates=coordinates[1];
-                playerTwoX=Integer.parseInt(sxcoordinates);
-                playerTwoY=Integer.parseInt(sycoordinates);
-                playerTwoX+=440;    
+                    String coordinates[]=msg.split("_");
+                    if(coordinates[0].equals("lv"))
+                    {
+                        islv=true;
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        lvX=Integer.parseInt(tempxcoordinates);
+                        lvY=Integer.parseInt(tempycoordinates);
+                        
+                    }
+                    else if(coordinates[0].equals("dh"))
+                    {
+                        isdh=true;
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        dhX=Integer.parseInt(tempxcoordinates);
+                        dhY=Integer.parseInt(tempycoordinates);  
+                    }   
+                    else if(coordinates[0].equals("rv"))
+                    {
+                        isrv=true;
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        rvX=Integer.parseInt(tempxcoordinates);
+                        rvY=Integer.parseInt(tempycoordinates);  
+                    }
+                    else if(coordinates[0].equals("uh"))
+                    {
+                        isuh=true;
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        uhX=Integer.parseInt(tempxcoordinates);
+                        uhY=Integer.parseInt(tempycoordinates);  
+                    } 
                 }
                 else if(msg.equals("play"))
                 {
                     startgameforeign=true;
                     System.out.println("play recieved here");
                 }
-                if(countdashes(msg)==true)
+                if(countdashes(msg)==4)
                 //else
                 {
-                String coordinates[]=msg.split("_");
-                String sxcoordinates=coordinates[0];
-                String sycoordinates=coordinates[1];
-                playerTwoX=Integer.parseInt(sxcoordinates);
-                playerTwoY=Integer.parseInt(sycoordinates);
-                playerTwoX+=440; 
-                String balldeltax=coordinates[2];
-                String balldeltay=coordinates[3];
-                ballDeltaX=-1*Integer.parseInt(balldeltax);
-                ballDeltaY=Integer.parseInt(balldeltay);
-                System.out.println("ball collision msg recieved");
+                    String coordinates[]=msg.split("_");
+                    
+                    if(coordinates[0].equals("lv"))
+                    {
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        lvX=Integer.parseInt(tempxcoordinates);
+                        lvY=Integer.parseInt(tempycoordinates);
+                        String balldeltax=coordinates[3];
+                        String balldeltay=coordinates[4];
+                        ballDeltaX=Integer.parseInt(balldeltax);
+                        ballDeltaY=Integer.parseInt(balldeltay);
+                        System.out.println("ball collision msg recieved");
+                
+                    }
+                    if(coordinates[0].equals("dh"))
+                    {
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        dhX=Integer.parseInt(tempxcoordinates);
+                        dhY=Integer.parseInt(tempycoordinates);
+                        //playerThreeY=Integer.parseInt(sycoordinates2);
+                        //440 change hoga
+                        //playerThreeX+=440;
+                        String balldeltax=coordinates[3];
+                        String balldeltay=coordinates[4];
+                        ballDeltaX=Integer.parseInt(balldeltay);
+                        ballDeltaY=Integer.parseInt(balldeltax);
+                        System.out.println("ball collision msg recieved");
+                    } 
+                    if(coordinates[0].equals("rv"))
+                    {
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        rvX=Integer.parseInt(tempxcoordinates);
+                        rvY=Integer.parseInt(tempycoordinates);
+                        String balldeltax=coordinates[3];
+                        String balldeltay=coordinates[4];
+                        ballDeltaX=Integer.parseInt(balldeltax);
+                        ballDeltaY=Integer.parseInt(balldeltay);
+                        System.out.println("ball collision msg recieved");
+                
+                    }
+                    if(coordinates[0].equals("uh"))
+                    {
+                        String tempxcoordinates=coordinates[1];
+                        String tempycoordinates=coordinates[2];
+                        uhX=Integer.parseInt(tempxcoordinates);
+                        uhY=Integer.parseInt(tempycoordinates);
+                        //playerThreeY=Integer.parseInt(sycoordinates2);
+                        //440 change hoga
+                        //playerThreeX+=440;
+                        String balldeltax=coordinates[3];
+                        String balldeltay=coordinates[4];
+                        ballDeltaX=Integer.parseInt(balldeltay);
+                        ballDeltaY=Integer.parseInt(balldeltax);
+                        System.out.println("ball collision msg recieved");
+                    }
                 }
-                //repaint();
+                if(msg.equals("0"))
+                {
+                    ballDeltaX=0;
+                    ballDeltaY=0;
+                    ballX=240;
+                    ballY=240;
+                }
+                else if(msg.equals("1"))
+                {
+                    ballDeltaX=initialballDeltaX;
+                    ballDeltaY=initialballDeltaY;
+                }
 
             } 
             catch (IOException e)
@@ -191,6 +325,8 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
             }
         }
     }
+
+
     public void step(){
 
         //where will the ball be after it moves?
@@ -198,112 +334,75 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         float nextBallRight = ballX + diameter + ballDeltaX;
         float nextBallTop = ballY + ballDeltaY;
         float nextBallBottom = ballY + diameter + ballDeltaY;
-
+        if(waittimer>0)
+        {
+            waittimer--;
+        }else if(waittimer==0){
+            ballDeltaX=initialballDeltaX;
+            ballDeltaY=initialballDeltaY;
+            waittimer=-1;
+            try{
+                sendTo(address,"1");
+                sendTo(address2,"1");
+            }
+            catch(IOException e)
+            {
+                System.out.println("IOException caught");
+            }
+        }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //move player 1
-        int move1=0;
-        move1=player1_move();
-        
-        int playerOneRight = playerOneX + playerOneWidth;
-        int playerOneTop = playerOneY;
-        int playerOneBottom = playerOneY + playerOneHeight;
-
-        String positionmsg="";
-        positionmsg=positionmsg+playerOneX;
-        positionmsg=positionmsg+"_"+playerOneY;
-        try
+        //int move1=0;
+        //System.out.println(ballX+" "+ballY+" "+looptimer++);
+        if(location.equals("lv"))
         {
-        sendTo(address,positionmsg);    
+            lv(nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
         }
-        catch(IOException e)
+        else if(location.equals("dh"))
         {
-            System.out.println("IOException caught");
+            dh(nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
+        else if(location.equals("rv"))
+        {
+            rv(nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
+        else if(location.equals("uh"))
+        {
+            uh(nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
         }
         
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //move player 2
-        /*String playertwomsg;
-        String coordinates=playertwomsg.split("-");
-        String sxcoordinates=coordinates[0];
-        String sycoordinates=coordinates[1];
-        playerTwoX=Integer.parseInt(sxcoordinates);
-        playerTwoY=Integer.parseInt(sycoordinates);
-        */
-        int playerTwoLeft = playerTwoX;
-        int playerTwoTop = playerTwoY;
-        int playerTwoBottom = playerTwoY + playerTwoHeight;
-        
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
-        //ball bounces off top and bottom of screen
         if (nextBallTop < 0 || nextBallBottom > getHeight()) {
           //if (nextBallBottom>getHeight()){
             ballDeltaY *= -1;
         }
-
-                //will the ball go off the left side?
-        if (nextBallLeft < playerOneRight) { 
-            //is it going to miss the paddle?
-            if ( ballY > playerOneBottom || ballY < playerOneTop) {
-
-                playerTwoScore ++;
-
-                ballX = 250;
-                ballY = 250;
-                ballDeltaX = initialballDeltaX;
-                ballDeltaY = initialballDeltaY;
-                
-            }
-            else {
-                System.out.println("collision detected");
-                ballDeltaX *= -1;
-                String positionballmsg="";
-                positionballmsg=positionballmsg+playerOneX+"_"+playerOneY+"_"+ballDeltaX+"_"+ballDeltaY;
-                try
-                {
-                    System.out.println("entered try");
-                    sendTo(address,positionballmsg);    
-                }
-                catch(IOException e)
-                {
-                    System.out.println("IOException caught");
-                }
-            }
-        }
-
-        /*else{
+    
         try
         {
-        sendTo(address,positionmsg);    
+        sendTo(address,positionmsg);
+        sendTo(address2,positionmsg);    
         }
         catch(IOException e)
         {
             System.out.println("IOException caught");
         }
-        }
-        */
-        //will the ball go off the right side?
-        /*if (nextBallRight > playerTwoLeft) {
-            //is it going to miss the paddle?
-            if (ballY > playerTwoBottom || ballY < playerTwoTop) {
-                playerOneScore ++;
-                counter1=counter2;
-                deviation=0;
-                
-                ballX = 250;
-                ballY = 250;
-                ballDeltaX = initialballDeltaX;
-                ballDeltaY = initialballDeltaY;
-                
-
-            }
-            else {
-                counter1+=1;
-                ballDeltaX *= -1;
-            }
-            
-        }*/
         
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /*int playerTwoLeft = playerTwoX;
+        int playerTwoTop = playerTwoY;
+        int playerTwoBottom = playerTwoY + playerTwoHeight;
+        */
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+        //ball bounces off top and bottom of screen
+        /*if (nextBallTop < 0 || nextBallBottom > getHeight()) {
+          //if (nextBallBottom>getHeight()){
+            ballDeltaY *= -1;
+        }*/
+
+                //will the ball go off the left side?
+        
+       
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //move the ball
         ballX += ballDeltaX;
@@ -313,23 +412,275 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         repaint();
     }
 
-    public int player1_move()
+    public void lv(float nextBallLeft,float nextBallRight,float nextBallTop,float nextBallBottom)
     {
-        int bool=0;
+        playerlv_move();
+            int localplayerRight = localplayerX + localplayerWidth;
+            int localplayerTop = localplayerY;
+            int localplayerBottom = localplayerY + localplayerHeight;
+
+            if (nextBallLeft < localplayerRight) { 
+            //is it going to miss the paddle?
+                //here also write the code of corner case
+            if ( nextBallBottom > localplayerBottom || nextBallTop < localplayerTop) {
+
+               // playerTwoScore ++;
+                try{
+                    sendTo(address,"0");
+                    sendTo(address2,"0");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+                waittimer=20;
+
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+                
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaX *= -1;
+                String positionballmsg="";
+                positionballmsg=positionballmsg+"lv"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
+                //System.out.println(positionballmsg+" "+looptimer++);
+                //System.out.println(ballX+" "+ballY);
+                try
+                {
+                    System.out.println("entered try");
+                    sendTo(address,positionballmsg);
+                    sendTo(address2,positionballmsg);    
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+            }
+        
+        }
+        positionmsg="lv"+"_"+localplayerX+"_"+localplayerY;
+        //positionmsg=positionmsg;
+        
+    }
+    public void dh(float nextBallLeft,float nextBallRight,float nextBallTop,float nextBallBottom)
+    {
+        playerdh_move();
+            int localplayerTop = localplayerY;
+            int localplayerRight = localplayerX + localplayerWidth;  
+            int localplayerLeft = localplayerX ;
+
+            if (nextBallBottom > localplayerTop) { 
+            //is it going to miss the paddle?
+            if ( nextBallLeft<localplayerLeft|| nextBallRight > localplayerRight) {
+
+               // playerTwoScore ++;
+                try{
+                    sendTo(address,"0");
+                    sendTo(address2,"0");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+                
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaY *= -1;
+                String positionballmsg="";
+                positionballmsg=positionballmsg+"dh"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
+                try
+                {
+                    System.out.println("entered try");
+                    sendTo(address,positionballmsg);
+                    sendTo(address2,positionballmsg);    
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+            }
+        }
+
+        positionmsg="dh"+"_"+localplayerX+"_"+localplayerY;
+
+    }
+    public void rv(float nextBallLeft,float nextBallRight,float nextBallTop,float nextBallBottom)
+    {
+        playerrv_move();
+            int localplayerLeft= localplayerX;
+            int localplayerTop = localplayerY;
+            int localplayerBottom = localplayerY + localplayerHeight;
+
+            if (nextBallRight > localplayerLeft) { 
+            //is it going to miss the paddle?
+                //here also write the code of corner case
+            if ( nextBallBottom > localplayerBottom || nextBallTop < localplayerTop) {
+
+               // playerTwoScore ++;
+                try{
+                    sendTo(address,"0");
+                    sendTo(address2,"0");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+                
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaX *= -1;
+                String positionballmsg="";
+                positionballmsg=positionballmsg+"rv"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
+                try
+                {
+                    System.out.println("entered try");
+                    sendTo(address,positionballmsg);
+                    sendTo(address2,positionballmsg);    
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+            }
+        }
+        positionmsg="rv"+"_"+localplayerX+"_"+localplayerY;
+
+    }
+    public void uh(float nextBallLeft,float nextBallRight,float nextBallTop,float nextBallBottom)
+    {
+            playeruh_move();
+            int localplayerBottom = localplayerY+localplayerHeight;
+            int localplayerLeft = localplayerX;  
+            int localplayerRight = localplayerX + localplayerWidth;
+
+            if (nextBallTop < localplayerBottom) { 
+            //is it going to miss the paddle?
+                System.out.println(nextBallTop);
+            if ( nextBallLeft<localplayerLeft|| nextBallRight > localplayerRight) {
+
+               // playerTwoScore ++;
+                try{
+                    sendTo(address,"0");
+                    sendTo(address2,"0");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+                
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaY *= -1;
+                String positionballmsg="";
+                positionballmsg=positionballmsg+"uh"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
+                try
+                {
+                    System.out.println("entered try");
+                    sendTo(address,positionballmsg);
+                    sendTo(address2,positionballmsg);    
+                }
+                catch(IOException e)
+                {
+                    System.out.println("IOException caught");
+                }
+            }
+        }
+        positionmsg="uh"+"_"+localplayerX+"_"+localplayerY;
+    }
+    public void playerlv_move()
+    {
+        //int bool=0;
         if (upPressed) {  
-            bool=1;                                       //means positive direction is below. because on up press, y value is being reduced
-            if (playerOneY-paddleSpeed > 0) {
-                playerOneY -= paddleSpeed;
+            //bool=1;                                       //means positive direction is below. because on up press, y value is being reduced
+            if (localplayerY-paddleSpeed > 0) {
+                localplayerY -= paddleSpeed;
             }
         }
         if (downPressed) {
-            if (playerOneY + paddleSpeed + playerOneHeight < getHeight()) {
-                playerOneY += paddleSpeed;
+            if (localplayerY + paddleSpeed + localplayerHeight < getHeight()) {
+                localplayerY += paddleSpeed;
             }
         }
-        return bool;
+        //return bool;
     }
     
+    public void playerrv_move()
+    {
+        //int bool=0;
+        if (upPressed) {  
+            //bool=1;                                       //means positive direction is below. because on up press, y value is being reduced
+            if (localplayerY-paddleSpeed > 0) {
+                localplayerY -= paddleSpeed;
+            }
+        }
+        if (downPressed) {
+            if (localplayerY + paddleSpeed + localplayerHeight < getHeight()) {
+                localplayerY += paddleSpeed;
+            }
+        }
+        //return bool;
+    }
+    public void playerdh_move()
+    {
+        //int bool=0;
+        if (leftPressed) {  
+            //bool=1;                                       //means positive direction is below. because on up press, y value is being reduced
+            if (localplayerX-paddleSpeed > 0) {
+                localplayerX -= paddleSpeed;
+            }
+        }
+        if (rightPressed) {
+            if (localplayerX + paddleSpeed + localplayerWidth < getHeight()) {
+                localplayerX += paddleSpeed;
+            }
+        }
+        //return bool;
+    }
+    public void playeruh_move()
+    {
+        //int bool=0;
+        if (leftPressed) {  
+            //bool=1;                                       //means positive direction is below. because on up press, y value is being reduced
+            if (localplayerX-paddleSpeed > 0) {
+                localplayerX -= paddleSpeed;
+            }
+        }
+        if (rightPressed) {
+            if (localplayerX + paddleSpeed + localplayerWidth < getHeight()) {
+                localplayerX += paddleSpeed;
+            }
+        }
+        //return bool;
+    }
 
     //paint the game screen
     public void paintComponent(Graphics g){
@@ -337,34 +688,52 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         super.paintComponent(g);
         g.setColor(Color.WHITE);
 
-        int playerOneRight = playerOneX + playerOneWidth;
-        int playerTwoLeft =  playerTwoX;
-        //int playerThreeTop = playerThreeY;
-        //int playerFourBottom = playerFourY + playerFourHeight;
-
-        //draw dashed line down center
-        //for (int lineY = 0; lineY < getHeight(); lineY += 50) {
-          //  g.drawLine(250, lineY, 250, lineY+25);
-        //}
-
-        //draw "goal lines" on each side
-        g.drawLine(playerOneRight, 0, playerOneRight, getHeight());
-        g.drawLine(playerTwoLeft, 0, playerTwoLeft, getHeight());
-        //g.drawLine(0, playerThreeTop, getWidth(), playerThreeTop);
-        //g.drawLine(0, playerFourBottom, getWidth(),playerFourBottom);
-
+        if(location.equals("lv")){
+            g.drawLine(localplayerX+localplayerWidth, 0,localplayerX+localplayerWidth, getHeight());
+        }
+        else if(location.equals("dh")){
+            g.drawLine(0,localplayerY,getWidth(), localplayerY);
+        }
+        else if(location.equals("rv")){
+            g.drawLine(localplayerX, 0,localplayerX, getHeight());
+        }
+        else if(location.equals("uh")){
+            g.drawLine(0,localplayerY+localplayerHeight,getWidth(), localplayerY+localplayerHeight);
+        }
         //draw the scores
         g.setFont(new Font(Font.DIALOG, Font.BOLD, 36));
-        g.drawString(String.valueOf(playerOneScore), 100, 100);
-        g.drawString(String.valueOf(playerTwoScore), 400, 100);
+        //g.drawString(String.valueOf(playerOneScore), 100, 100);
+        //g.drawString(String.valueOf(playerTwoScore), 400, 100);
 
         //draw the ball
         g.fillOval(ballX, ballY, diameter, diameter);
 
         //draw the paddles
-        g.fillRect(playerOneX, playerOneY, playerOneWidth, playerOneHeight);
+        g.fillRect(localplayerX, localplayerY, localplayerWidth, localplayerHeight);
+
+        if(islv)
+        {
+            g.drawLine(lvX+lvWidth, 0,lvX+lvWidth, getHeight());
+            g.fillRect(lvX, lvY, lvWidth, lvHeight);
+        }
+        if(isdh)
+        {
+            g.drawLine(0,dhY, getWidth(), dhY);
+            g.fillRect(dhX, dhY, dhWidth, dhHeight);
+        }
+        if(isrv)
+        {
+            g.drawLine(rvX, 0,rvX, getHeight());
+            g.fillRect(rvX, rvY, lvWidth, lvHeight);
+        }
+        if(isuh)
+        {
+            g.drawLine(0,uhY+uhHeight, getWidth(), uhY+uhHeight);
+            g.fillRect(uhX, uhY, uhWidth, uhHeight);
+        }
+        /*g.fillRect(playerOneX, playerOneY, playerOneWidth, playerOneHeight);
         g.fillRect(playerTwoX, playerTwoY, playerTwoWidth, playerTwoHeight);
-        //g.fillRect(playerThreeX, playerThreeY, playerThreeWidth, playerThreeHeight);
+        g.fillRect(playerThreeX, playerThreeY, playerThreeWidth, playerThreeHeight);*/
         //g.fillRect(playerFourX, playerFourY, playerFourWidth, playerFourHeight);
     }
 
@@ -385,6 +754,12 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         else if (e.getKeyCode() == KeyEvent.VK_S) {
             sPressed = true;
         }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            leftPressed = true;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            rightPressed = true;
+        }
     }
 
 
@@ -400,6 +775,12 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         }
         else if (e.getKeyCode() == KeyEvent.VK_S) {
             sPressed = false;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            leftPressed = false;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            rightPressed = false;
         }
     }
 
