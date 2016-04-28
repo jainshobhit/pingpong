@@ -20,17 +20,17 @@ public class Main{
 		//String name = scanner.nextLine();
 		
 		//System.out.print("Source Port : ");
-		int sourcePort=2345;
+		int sourcePort=1234;
 		//int sourcePort = Integer.parseInt(scanner.nextLine());
 		
 		System.out.print("Destination IP : ");
 		//String destinationIP = "192.168.146.51";
-		String destinationIP2 = "10.192.41.103";
+		String destinationIP2 = "10.234.11.217";
 		String destinationIP = "10.192.51.85";
 		//String destinationIP = scanner.nextLine();
 		
 		System.out.print("Destination Port : ");
-		int destinationPort2=1234;
+		int destinationPort2=2345;
 		int destinationPort=3456;
 		//int destinationPort = Integer.parseInt(scanner.nextLine());
 		//////////////////////////////////////here we will ask which side the player is playing. Based on that, different channel will be called.
