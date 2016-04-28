@@ -39,8 +39,8 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
     private int ballX = 240;
     private int ballY = 240;
     private int diameter = 20;
-    private int ballDeltaX = -5;
-    private int ballDeltaY = -5;
+    private int ballDeltaX = -7;
+    private int ballDeltaY = 5;
     private int initialballDeltaX = ballDeltaX;
     private int initialballDeltaY = ballDeltaY;
 
@@ -53,23 +53,59 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
     private int lvY = 0;                               // this represents the topmost coordinated of bat
     private int lvWidth = 10;
     private int lvHeight = 50;
+    private boolean lvedge=false;
 
     private int dhX = 0;                               //this represents the left coordinate of the bat
     private int dhY = 0;                               // this represents the topmost coordinated of bat
     private int dhWidth = 50;
     private int dhHeight = 10;
+    private boolean dhedge=false;
 
     private int rvX = 0;                               //this represents the left coordinate of the bat
     private int rvY = 0;                               // this represents the topmost coordinated of bat
     private int rvWidth = 10;
     private int rvHeight = 50;
+    private boolean rvedge=false;
 
     private int uhX = 0;                               //this represents the left coordinate of the bat
     private int uhY = 0;                               // this represents the topmost coordinated of bat
     private int uhWidth = 50;
     private int uhHeight = 10;
+    private boolean uhedge=false;
 
-    private int paddleSpeed = 8;        //represents speed of the bat
+    private int temp_x=ballDeltaX;
+    private int temp_x1=ballDeltaX;
+    private int temp_y=ballDeltaY;
+    private int temp_y1=ballDeltaY;
+
+    private int horizontalround=15;
+    private int verticalround=10;
+    private int paddleSpeed = 10;        //represents speed of the bat
+
+    private int comp_paddle=0;
+    private int comp_paddle2=0;
+    private int comp_paddle3=0;
+    private int comp_paddle4=0;
+
+    private int playerOneX = 250;                                //this represents the left coordinate of the bat
+    private int playerOneY = 475;                               // this represents the topmost coordinated of bat
+    private int playerOneWidth = 50;
+    private int playerOneHeight = 10;
+
+    private int playerTwoX = 475;
+    private int playerTwoY = 250;
+    private int playerTwoWidth = 10;
+    private int playerTwoHeight = 50;
+
+    private int playerThreeX = 250;                          //player 4 is the computer player
+    private int playerThreeY = 15;
+    private int playerThreeWidth = 50;
+    private int playerThreeHeight = 10;
+
+    private int playerFourX = 15;                                //this represents the left coordinate of the bat
+    private int playerFourY = 250;                               // this represents the topmost coordinated of bat
+    private int playerFourWidth = 10;
+    private int playerFourHeight = 50;
 
     private int playerlvScore = 0;
     private int playerdhScore = 0;
@@ -90,7 +126,8 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
     //construct a PongPanel
     public twoplayer1(String a){
         location=a;
-        setBackground(Color.BLACK);
+        Color backColor = new Color(4, 2, 54);
+        setBackground(backColor);
         if(location.equals("lv")){
             localplayerX = 15;                               //this represents the left coordinate of the bat
             localplayerY = 250;                               // this represents the topmost coordinated of bat
@@ -272,8 +309,8 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                         //playerThreeX+=440;
                         String balldeltax=coordinates[3];
                         String balldeltay=coordinates[4];
-                        ballDeltaX=Integer.parseInt(balldeltay);
-                        ballDeltaY=Integer.parseInt(balldeltax);
+                        ballDeltaX=Integer.parseInt(balldeltax);
+                        ballDeltaY=Integer.parseInt(balldeltay);
                         System.out.println("ball collision msg recieved");
                     } 
                     if(coordinates[0].equals("rv"))
@@ -300,8 +337,8 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                         //playerThreeX+=440;
                         String balldeltax=coordinates[3];
                         String balldeltay=coordinates[4];
-                        ballDeltaX=Integer.parseInt(balldeltay);
-                        ballDeltaY=Integer.parseInt(balldeltax);
+                        ballDeltaX=Integer.parseInt(balldeltax);
+                        ballDeltaY=Integer.parseInt(balldeltay);
                         System.out.println("ball collision msg recieved");
                     }
                 }
@@ -311,11 +348,33 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                     ballDeltaY=0;
                     ballX=240;
                     ballY=240;
+		    reset_AI();
                 }
                 else if(msg.equals("1"))
                 {
                     ballDeltaX=initialballDeltaX;
                     ballDeltaY=initialballDeltaY;
+                }
+
+                if(msg.equals("lv_quit"))
+                {
+                    islv=false;
+                    //AI(2,"left");
+                }
+                if(msg.equals("dh_quit"))
+                {
+                    isdh=false;
+                    //AI(2,"down");
+                }
+                if(msg.equals("rv_quit"))
+                {
+                    isrv=false;
+                    //AI(2,"right");
+                }
+                if(msg.equals("uh_quit"))
+                {
+                    isuh=false;
+                    //AI(2,"up");
                 }
 
             } 
@@ -350,7 +409,22 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 System.out.println("IOException caught");
             }
         }
-
+        if(!location.equals("lv")&& !islv)
+        {
+            AI(2,"left",nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
+        if(!location.equals("dh")&& !isdh)
+        {
+            AI(2,"down",nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
+        if(!location.equals("rv")&& !isrv)
+        {
+            AI(2,"right",nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
+        if(!location.equals("uh")&& !isuh)
+        {
+            AI(2,"up",nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
+        }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //move player 1
         //int move1=0;
@@ -372,10 +446,10 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
             uh(nextBallLeft, nextBallRight, nextBallTop, nextBallBottom);
         }
         
-        if (nextBallTop < 0 || nextBallBottom > getHeight()) {
+        /*if (nextBallTop < 0 || nextBallBottom > getHeight()) {
           //if (nextBallBottom>getHeight()){
             ballDeltaY *= -1;
-        }
+        }*/
     
         try
         {
@@ -422,7 +496,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
             if (nextBallLeft < localplayerRight) { 
             //is it going to miss the paddle?
                 //here also write the code of corner case
-            if ( nextBallBottom > localplayerBottom || nextBallTop < localplayerTop) {
+            if ( nextBallTop > localplayerBottom || nextBallBottom < localplayerTop) {
 
                // playerTwoScore ++;
                 try{
@@ -441,11 +515,29 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 ballDeltaY = 0;
                 //send a message for telling to increse the score and 
                 //also to place the ball again at centre
+		reset_AI();
                 
             }
             else {
                 System.out.println("collision detected");
                 ballDeltaX *= -1;
+                if((ballY>localplayerY&&ballY-localplayerY<=5)||ballY<localplayerY+localplayerHeight&&ballY>=localplayerY+localplayerHeight-5)
+                {
+                    lvedge=true;
+                }
+
+                if(lvedge)
+                {
+                    temp_y1=ballDeltaY;
+                    ballDeltaY*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaY>0){ballDeltaY=Math.abs(temp_y1);}
+                    else{ballDeltaY=-1*Math.abs(temp_y1);}
+                }
+
                 String positionballmsg="";
                 positionballmsg=positionballmsg+"lv"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
                 //System.out.println(positionballmsg+" "+looptimer++);
@@ -476,7 +568,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
 
             if (nextBallBottom > localplayerTop) { 
             //is it going to miss the paddle?
-            if ( nextBallLeft<localplayerLeft|| nextBallRight > localplayerRight) {
+            if ( nextBallRight<localplayerLeft|| nextBallLeft > localplayerRight) {
 
                // playerTwoScore ++;
                 try{
@@ -494,11 +586,29 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 ballDeltaY = 0;
                 //send a message for telling to increse the score and 
                 //also to place the ball again at centre
+		reset_AI();
                 
             }
             else {
                 System.out.println("collision detected");
                 ballDeltaY *= -1;
+
+                if((ballX>localplayerX&&ballX-localplayerX<=5)||ballX<localplayerX+localplayerWidth&&ballX>=localplayerX+localplayerWidth-5)
+                {
+                    dhedge=true;
+                }
+
+                if(dhedge)
+                {
+                    temp_x=ballDeltaX;
+                    ballDeltaX*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaX>0){ballDeltaX=Math.abs(temp_x);}
+                    else{ballDeltaX=-1*Math.abs(temp_x);}
+                }
                 String positionballmsg="";
                 positionballmsg=positionballmsg+"dh"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
                 try
@@ -527,7 +637,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
             if (nextBallRight > localplayerLeft) { 
             //is it going to miss the paddle?
                 //here also write the code of corner case
-            if ( nextBallBottom > localplayerBottom || nextBallTop < localplayerTop) {
+            if ( nextBallTop > localplayerBottom || nextBallBottom < localplayerTop) {
 
                // playerTwoScore ++;
                 try{
@@ -545,11 +655,30 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 ballDeltaY = 0;
                 //send a message for telling to increse the score and 
                 //also to place the ball again at centre
+		reset_AI();
                 
             }
             else {
                 System.out.println("collision detected");
                 ballDeltaX *= -1;
+
+                if((ballY>localplayerY&&ballY-localplayerY<=5)||ballY<localplayerY+localplayerHeight&&ballY>=localplayerY+localplayerHeight-5)
+                {
+                    rvedge=true;
+                }
+
+                if(rvedge)
+                {
+                    temp_y=ballDeltaY;
+                    ballDeltaY*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaY>0){ballDeltaY=Math.abs(temp_y);}
+                    else{ballDeltaY=-1*Math.abs(temp_y);}
+                }
+
                 String positionballmsg="";
                 positionballmsg=positionballmsg+"rv"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
                 try
@@ -577,7 +706,7 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
             if (nextBallTop < localplayerBottom) { 
             //is it going to miss the paddle?
                 System.out.println(nextBallTop);
-            if ( nextBallLeft<localplayerLeft|| nextBallRight > localplayerRight) {
+            if ( nextBallRight<localplayerLeft|| nextBallLeft > localplayerRight) {
 
                // playerTwoScore ++;
                 try{
@@ -595,11 +724,29 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
                 ballDeltaY = 0;
                 //send a message for telling to increse the score and 
                 //also to place the ball again at centre
-                
+		reset_AI();                
             }
             else {
                 System.out.println("collision detected");
                 ballDeltaY *= -1;
+
+                if((ballX>localplayerX&&ballX-localplayerX<=5)||ballX<localplayerX+localplayerWidth&&ballX>=localplayerX+localplayerWidth-5)
+                {
+                    uhedge=true;
+                }
+
+                if(uhedge)
+                {                   
+                    temp_x1=ballDeltaX;
+                    ballDeltaX*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaX>0){ballDeltaX=Math.abs(temp_x1);}
+                    else{ballDeltaX=-1*Math.abs(temp_x1);}
+                }
+                
                 String positionballmsg="";
                 positionballmsg=positionballmsg+"uh"+"_"+localplayerX+"_"+localplayerY+"_"+ballDeltaX+"_"+ballDeltaY;
                 try
@@ -682,11 +829,277 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         //return bool;
     }
 
+	public void reset_AI(){
+		playerOneX = 250;                                
+	        playerOneY = 475;
+		playerTwoX = 475;
+                playerTwoY = 250;
+		playerThreeX = 250;                          
+                playerThreeY = 15;
+		playerFourX = 15;                                  
+                playerFourY = 250;   
+
+                                                          
+	}
+    public void AI(int level, String position,float nextBallLeft,float nextBallRight,float nextBallTop,float nextBallBottom)           //Different AI implementation to test on different circumstances
+    {
+            //if(level==1){gap=100; conf=5000;}
+            //if(level==2){gap=250;conf=2000;}
+            //if(level==3){gap=400; conf=400;}
+            int up_barrier=playerThreeY+playerThreeHeight;
+            int down_barrier=playerOneY;
+            int left_barrier=playerFourX+playerFourWidth;
+            int right_barrier=playerTwoX;
+
+             if(position.equals("down")){
+
+                if(ballDeltaX<=8&& ballDeltaX>=-8){comp_paddle=ballDeltaX;}
+                else {
+                    if(ballDeltaX>0){comp_paddle=8;}
+                    else{comp_paddle=-8;}
+                }
+                
+                if(comp_paddle>0)
+                {
+                    if(playerOneX+playerOneWidth+comp_paddle<right_barrier){playerOneX+=comp_paddle;}
+                }
+                else
+                {
+                    if(playerOneX+comp_paddle>left_barrier){playerOneX+=comp_paddle;}
+                }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            if (nextBallBottom > playerOneY) { 
+            //is it going to miss the paddle?
+            if ( nextBallRight<playerOneX|| nextBallLeft > playerOneX+playerOneWidth) {
+
+               // playerTwoScore ++;
+                
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+		reset_AI();                              
+                
+            }
+            else {
+                //System.out.println("collision detected");
+                ballDeltaY *= -1;
+
+                if((ballX>playerOneX&&ballX-playerOneX<=5)||ballX<playerOneX+playerOneWidth&&ballX>=playerOneX+playerOneWidth-5)
+                {
+                    dhedge=true;
+                }
+
+                if(dhedge)
+                {
+                    temp_x=ballDeltaX;
+                    ballDeltaX*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaX>0){ballDeltaX=Math.abs(temp_x);}
+                    else{ballDeltaX=-1*Math.abs(temp_x);}
+                }
+            }
+        }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            }
+
+            if(position.equals("right")){
+
+
+                 if(ballDeltaY<=8&& ballDeltaY>=-8){comp_paddle2=ballDeltaY;}
+                else {
+                    if(ballDeltaY>0){comp_paddle2=8;}
+                    else{comp_paddle2=-8;}
+                }
+                
+                if(comp_paddle2>0)
+                {
+                    if(playerTwoY+playerOneHeight+comp_paddle2<down_barrier){playerTwoY+=comp_paddle2;}
+                }
+                else
+                {
+                    if(playerTwoY+comp_paddle2>up_barrier){playerTwoY+=comp_paddle2;}
+                }
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+                 if (nextBallRight > playerTwoX) { 
+            //is it going to miss the paddle?
+                //here also write the code of corner case
+                if ( nextBallTop > playerTwoY+playerTwoWidth || nextBallBottom < playerTwoY) {
+
+               // playerTwoScore ++;
+                
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+		reset_AI();
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaX *= -1;
+
+                if((ballY>playerTwoY&&ballY-playerTwoY<=5)||ballY<playerTwoY+playerTwoHeight&&ballY>=playerTwoY+playerTwoHeight-5)
+                {
+                    rvedge=true;
+                }
+
+                if(rvedge)
+                {
+                    temp_y=ballDeltaY;
+                    ballDeltaY*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaY>0){ballDeltaY=Math.abs(temp_y);}
+                    else{ballDeltaY=-1*Math.abs(temp_y);}
+                }
+
+            }
+        }  
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            }
+
+            if(position.equals("up")){
+
+                if(ballDeltaX<=8&& ballDeltaX>=-8){comp_paddle3=ballDeltaX;}
+                else {
+                    if(ballDeltaX>0){comp_paddle3=8;}
+                    else{comp_paddle3=-8;}
+                }
+                
+                if(comp_paddle3>0)
+                {
+                    if(playerThreeX+playerThreeWidth+comp_paddle3<right_barrier){playerThreeX+=comp_paddle3;}
+                }
+                else
+                {
+                    if(playerThreeX+comp_paddle3>left_barrier){playerThreeX+=comp_paddle3;}
+                }
+
+                ///////////////////////////////////////////////////////////////////////////////////////////////////
+                if (nextBallTop < playerThreeY+playerThreeHeight) { 
+            //is it going to miss the paddle?
+                System.out.println(nextBallTop);
+            if ( nextBallRight<playerThreeX|| nextBallLeft > playerThreeX+playerThreeWidth) {
+
+               // playerTwoScore ++;
+                
+                waittimer=20;
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+		reset_AI();                 
+                
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaY *= -1;
+
+                if((ballX>playerThreeX&&ballX-playerThreeX<=5)||ballX<playerThreeX+playerThreeWidth&&ballX>=playerThreeX+playerThreeWidth-5)
+                {
+                    uhedge=true;
+                }
+
+                if(uhedge)
+                {                   
+                    temp_x1=ballDeltaX;
+                    ballDeltaX*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaX>0){ballDeltaX=Math.abs(temp_x1);}
+                    else{ballDeltaX=-1*Math.abs(temp_x1);}
+                }
+                
+            }
+        }
+                ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            }
+
+            if(position.equals("left")){
+
+                if(ballDeltaY<=8&& ballDeltaY>=-8){comp_paddle4=ballDeltaY;}
+                else {
+                    if(ballDeltaY>0){comp_paddle4=8;}
+                    else{comp_paddle4=-8;}
+                }
+                
+                if(comp_paddle4>0)
+                {
+                    if(playerFourY+playerOneHeight+comp_paddle4<down_barrier){playerFourY+=comp_paddle4;}
+                }
+                else
+                {
+                    if(playerFourY+comp_paddle4>up_barrier){playerFourY+=comp_paddle4;}
+                }
+
+                ///////////////////////////////////////////////////////////////////////////////////////////////
+
+            if (nextBallLeft < playerFourX+playerFourWidth) { 
+            //is it going to miss the paddle?
+                //here also write the code of corner case
+            if ( nextBallTop > playerFourY+playerFourHeight || nextBallBottom < playerFourY) {
+
+               
+                waittimer=20;
+
+                ballX = 240;
+                ballY = 240;
+                ballDeltaX = 0;
+                ballDeltaY = 0;
+                //send a message for telling to increse the score and 
+                //also to place the ball again at centre
+                
+		reset_AI();                          
+            }
+            else {
+                System.out.println("collision detected");
+                ballDeltaX *= -1;
+                if((ballY>playerFourY&&ballY-playerFourY<=5)||ballY<playerFourY+playerFourHeight&&ballY>=playerFourY+playerFourHeight-5)
+                {
+                    lvedge=true;
+                }
+
+                if(lvedge)
+                {
+                    temp_y1=ballDeltaY;
+                    ballDeltaY*=2;
+
+                }
+                else
+                {
+                    if(ballDeltaY>0){ballDeltaY=Math.abs(temp_y1);}
+                    else{ballDeltaY=-1*Math.abs(temp_y1);}
+                }
+            }
+        
+        }
+                ///////////////////////////////////////////////////////////////////////////////////////////////
+
+            }
+        
+    }
+
     //paint the game screen
     public void paintComponent(Graphics g){
 
         super.paintComponent(g);
-        g.setColor(Color.WHITE);
+        Color textColor = new Color(36, 255, 9);
+        g.setColor(Color.GREEN);
 
         if(location.equals("lv")){
             g.drawLine(localplayerX+localplayerWidth, 0,localplayerX+localplayerWidth, getHeight());
@@ -709,27 +1122,48 @@ public class twoplayer1 extends JPanel implements ActionListener, KeyListener, R
         g.fillOval(ballX, ballY, diameter, diameter);
 
         //draw the paddles
-        g.fillRect(localplayerX, localplayerY, localplayerWidth, localplayerHeight);
+        g.fillRoundRect(localplayerX, localplayerY, localplayerWidth, localplayerHeight, horizontalround, verticalround);
 
         if(islv)
         {
             g.drawLine(lvX+lvWidth, 0,lvX+lvWidth, getHeight());
-            g.fillRect(lvX, lvY, lvWidth, lvHeight);
+            g.fillRoundRect(lvX, lvY, lvWidth, lvHeight, horizontalround, verticalround);
         }
         if(isdh)
         {
             g.drawLine(0,dhY, getWidth(), dhY);
-            g.fillRect(dhX, dhY, dhWidth, dhHeight);
+            g.fillRoundRect(dhX, dhY, dhWidth, dhHeight, horizontalround, verticalround);
         }
         if(isrv)
         {
             g.drawLine(rvX, 0,rvX, getHeight());
-            g.fillRect(rvX, rvY, lvWidth, lvHeight);
+            g.fillRoundRect(rvX, rvY, lvWidth, lvHeight, horizontalround, verticalround);
         }
         if(isuh)
         {
             g.drawLine(0,uhY+uhHeight, getWidth(), uhY+uhHeight);
-            g.fillRect(uhX, uhY, uhWidth, uhHeight);
+            g.fillRoundRect(uhX, uhY, uhWidth, uhHeight, horizontalround, verticalround);
+        }
+
+        if(!location.equals("lv")&& !islv)
+        {
+            g.drawLine(playerFourX+playerFourWidth, 0,playerFourX+playerFourWidth, getHeight());
+            g.fillRoundRect(playerFourX, playerFourY, playerFourWidth, playerFourHeight, horizontalround, verticalround);
+        }
+        if(!location.equals("dh")&& !isdh)
+        {
+            g.drawLine(0,playerOneY, getWidth(), playerOneY);
+            g.fillRoundRect(playerOneX, playerOneY, playerOneWidth, playerOneHeight, horizontalround, verticalround);
+        }
+        if(!location.equals("rv")&& !isrv)
+        {
+            g.drawLine(playerTwoX, 0,playerTwoX, getHeight());
+            g.fillRoundRect(playerTwoX, playerTwoY, playerTwoWidth, playerTwoHeight, horizontalround, verticalround);
+        }
+        if(!location.equals("uh")&& !isuh)
+        {
+            g.drawLine(0,playerThreeY+playerThreeHeight, getWidth(), playerThreeY+playerThreeHeight);
+            g.fillRoundRect(playerThreeX, playerThreeY, playerThreeWidth, playerThreeHeight, horizontalround, verticalround);
         }
         /*g.fillRect(playerOneX, playerOneY, playerOneWidth, playerOneHeight);
         g.fillRect(playerTwoX, playerTwoY, playerTwoWidth, playerTwoHeight);
